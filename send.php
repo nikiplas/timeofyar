@@ -1,4 +1,10 @@
 <?php
+header('Content-Type: application/json');
+error_reporting(0);
+
+// Включаем буферизацию вывода
+ob_start();
+
 // Файлы phpmailer
 require 'phpmailer/PHPMailer.php';
 require 'phpmailer/SMTP.php';
@@ -26,7 +32,7 @@ try {
     $mail->isSMTP();
     $mail->CharSet = "UTF-8";
     $mail->SMTPAuth   = true;
-    $mail->SMTPDebug = 2;
+    $mail->SMTPDebug = 0;
 
     // Настройки вашей почты
     $mail->Host       = 'smtp.yandex.ru'; // SMTP сервера вашей почты
@@ -45,13 +51,22 @@ $mail->Subject = $title;
 $mail->Body = $body;
 
 // Проверяем
-if ($mail->send()) {$result = "success";}
-else {$result = "error";}
-
+    if ($mail->send()) {
+        $result = "success";
+        $status = "Сообщение отправлено";
+    } else {
+        $result = "error";
+        $status = "Сообщение не было отправлено. Ошибка: {$mail->ErrorInfo}";
+    }
 } catch (Exception $e) {
     $result = "error";
     $status = "Сообщение не было отправлено. Причина ошибки: {$mail->ErrorInfo}";
 }
+// Очистка буфера и отправка результата
+$output = ob_get_clean();
+if ($output) {
+    error_log("Unexpected output: " . $output);
+}
+echo json_encode(["result" => $result, "status" => $status]);
+?>
 
-// Отображение результата
-echo json_encode(["result" => $result, "resultfile" => $rfile, "status" => $status]);
